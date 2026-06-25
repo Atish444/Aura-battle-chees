@@ -14,11 +14,13 @@
         #chessArena { width: 90%; max-width: 400px; margin: 20px auto; border: 2px solid red; display: none; }
         .shake-effect { animation: hit 0.5s; }
         @keyframes hit { 50% { transform: scale(1.05); background: #300; } }
+        /* TEXT PIECES KO BADA AUR SAAF DIKHANE KE LIYE CSS */
+        .square-55d63 font { font-size: 35px; line-height: 45px; display: block; text-align: center; cursor: pointer; }
     </style>
 </head>
 <body>
     <h1>AURA BATTLE CHESS</h1>
-    <button id="startBtn" style="padding: 20px; font-size: 20px;">START BATTLE</button>
+    <button id="startBtn" style="padding: 20px; font-size: 20px; background: red; color: white; border: none; border-radius: 5px; font-weight: bold;">START BATTLE</button>
     <div id="chessArena"><div id="myBoard"></div></div>
 
     <script>
@@ -26,25 +28,49 @@
         let game = new Chess();
         let board = null;
 
+        // Unicode text pieces ka map (Bina image ke chalega)
+        function customPieces(piece) {
+            const piecesMap = {
+                'wP': '♙', 'wR': '♖', 'wN': '♘', 'wB': '♗', 'wQ': '♕', 'wK': '♔',
+                'bP': '♟', 'bR': '♜', 'bN': '♞', 'bB': '♝', 'bQ': '♛', 'bK': '♚'
+            };
+            return '<font color="' + (piece.charAt(0) === 'w' ? 'white' : 'red') + '">' + piecesMap[piece] + '</font>';
+        }
+
         document.getElementById('startBtn').onclick = function() {
             this.style.display = 'none';
             document.getElementById('chessArena').style.display = 'block';
             
+            // Sound engine trigger on first click
+            moveSfx.play().then(() => { moveSfx.pause(); moveSfx.currentTime = 0; }).catch(()=>{});
+
             board = Chessboard('myBoard', {
                 draggable: true,
                 position: 'start',
-                pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png',
+                pieceTheme: customPieces, // Isse direct text pieces load honge
                 onDrop: function(s, t) {
                     let m = game.move({from: s, to: t, promotion: 'q'});
                     if (m === null) return 'snapback';
-                    moveSfx.play().catch(()=>{});
+                    
+                    moveSfx.play().catch((e)=>{ console.log(e) });
+                    
                     if (game.in_checkmate()) {
                         document.getElementById('chessArena').className = 'shake-effect';
                         alert("CHECKMATE!");
                     }
+                    window.setTimeout(makeBotMove, 500);
                 }
             });
         };
+
+        function makeBotMove() {
+            let moves = game.moves();
+            if (moves.length === 0) return;
+            let move = moves[Math.floor(Math.random() * moves.length)];
+            game.move(move);
+            board.position(game.fen());
+            moveSfx.play().catch(()=>{});
+        }
     </script>
 </body>
 </html>
